@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import { getCategories } from '@/lib/db/queries.js';
 import styles from './page.module.css';

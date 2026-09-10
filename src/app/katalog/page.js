@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { Suspense } from 'react';
 import { getProducts, getCategories, getManufacturers } from '@/lib/db/queries.js';
 import CatalogView from '@/components/catalog/CatalogView';

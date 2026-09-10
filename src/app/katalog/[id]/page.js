@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getProductById, getProducts } from '@/lib/db/queries.js';
@@ -256,14 +258,4 @@ export default async function ProductDetailPage({ params }) {
   );
 }
 
-export async function generateStaticParams() {
-  const products = await getProducts();
-  const params = [];
-  for (const p of products) {
-    params.push({ id: String(p.id) });
-    if (p.slug) {
-      params.push({ id: String(p.slug) });
-    }
-  }
-  return params;
-}
+
