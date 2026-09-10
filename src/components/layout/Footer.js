@@ -1,8 +1,14 @@
 import Link from 'next/link';
+import { getSettingsMap } from '@/lib/db/queries.js';
 import styles from './Footer.module.css';
 
-export default function Footer() {
+export default async function Footer() {
   const currentYear = new Date().getFullYear();
+  const settings = await getSettingsMap();
+
+  const address = settings.shop_address || 'Siesławice 229D, 28-100 Busko-Zdrój';
+  const phone = settings.shop_phone || '+48 798 025 026';
+  const desc = settings.shop_description || 'Sklep strzelecko-wędkarski w okolicach Buska-Zdroju. Szeroki wybór sprzętu, przynęt i akcesoriów wędkarskich.';
 
   return (
     <footer className={styles.footer} id="main-footer">
@@ -14,9 +20,7 @@ export default function Footer() {
               <img src="/images/logo.png" alt="CAMO" className={styles.brandImg} />
               <span className={styles.brandName}>CAMO</span>
             </div>
-            <p className={styles.brandDesc}>
-              Sklep strzelecko-wędkarski w okolicach Buska-Zdroju. Szeroki wybór sprzętu, przynęt i akcesoriów wędkarskich.
-            </p>
+            <p className={styles.brandDesc}>{desc}</p>
           </div>
 
           {/* Asortyment */}
@@ -47,13 +51,15 @@ export default function Footer() {
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                <span>Siesławice 229D<br />28-100 Busko-Zdrój</span>
+                <span>{address}</span>
               </div>
               <div className={styles.contactItem}>
                 <svg className={styles.contactIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                 </svg>
-                <a href="tel:+48798025026" className={styles.contactLink}>+48 798 025 026</a>
+                <a href={`tel:${phone.replace(/\s+/g, '')}`} className={styles.contactLink}>
+                  {phone}
+                </a>
               </div>
             </div>
           </div>

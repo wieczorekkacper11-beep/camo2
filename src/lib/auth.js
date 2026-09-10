@@ -146,3 +146,37 @@ export async function logoutAdmin() {
   cookieStore.delete(COOKIE_NAME);
   return { success: true };
 }
+
+
+/**
+ * Zmiana hasła administratora
+ */
+export async function changeAdminPassword(userId, currentPassword, newPassword) {
+  const userRows = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (userRows.length === 0) {
+    return { success: false, error: 'Użytkownik nie istnieje.' };
+  }
+
+  const user = userRows[0];
+  const isValid = verifyPassword(currentPassword, user.passwordHash);
+  if (!isValid) {
+    return { success: false, error: 'Aktualne hasło jest nieprawidłowe.' };
+  }
+
+  if (!newPassword || newPassword.length < 6) {
+    return { success: false, error: 'Nowe hasło musi mieć co najmniej 6 znaków.' };
+  }
+
+  const newHash = hashPassword(newPassword);
+  await db
+    .update(users)
+    .set({ passwordHash: newHash })
+    .where(eq(users.id, userId));
+
+  return { success: true };
+}

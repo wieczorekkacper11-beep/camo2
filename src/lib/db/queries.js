@@ -235,3 +235,55 @@ export async function getProductById(idOrSlug) {
 export async function getFeaturedProducts(limit = 6) {
   return getProducts({ featured: true, limit });
 }
+
+
+/**
+ * Pobiera mapę wszystkich ustawień sklepu
+ */
+export async function getSettingsMap() {
+  try {
+    const { settings } = await import('./schema.js');
+    const rows = await db.select().from(settings);
+    const map = {};
+    for (const row of rows) {
+      map[row.key] = row.value;
+    }
+    return map;
+  } catch (error) {
+    console.error('Błąd pobierania ustawień:', error);
+    return {};
+  }
+}
+
+/**
+ * Aktualizuje lub wstawia ustawienie
+ */
+export async function setSetting(key, value) {
+  try {
+    const { settings } = await import('./schema.js');
+    const existing = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.key, key))
+      .limit(1);
+
+    if (existing.length > 0) {
+      await db
+        .update(settings)
+        .set({
+          value: value !== null && value !== undefined ? String(value) : null,
+          updatedAt: sql`(datetime('now'))`,
+        })
+        .where(eq(settings.key, key));
+    } else {
+      await db.insert(settings).values({
+        key,
+        value: value !== null && value !== undefined ? String(value) : null,
+      });
+    }
+    return true;
+  } catch (error) {
+    console.error('Błąd zapisu ustawienia ' + key + ':', error);
+    throw error;
+  }
+}

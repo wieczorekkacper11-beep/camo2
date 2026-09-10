@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { getSettingsMap } from '@/lib/db/queries.js';
 import './globals.css';
 
 const inter = Inter({
@@ -34,10 +35,31 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const settings = await getSettingsMap();
+  const showBanner = (settings.announcement_enabled === '1' || settings.announcement_enabled === 'true') && settings.announcement_text;
+
   return (
     <html lang="pl" className={inter.variable}>
       <body>
+        {showBanner && (
+          <div
+            style={{
+              background: 'linear-gradient(90deg, #D4A017, #f3cf65, #D4A017)',
+              color: '#0d0d0d',
+              padding: '8px 16px',
+              textAlign: 'center',
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              letterSpacing: '0.01em',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+              position: 'relative',
+              zIndex: 100,
+            }}
+          >
+            {settings.announcement_text}
+          </div>
+        )}
         <Header />
         <main>{children}</main>
         <Footer />
