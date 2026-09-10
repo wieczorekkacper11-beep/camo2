@@ -420,3 +420,87 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Upload styles */
+.uploadSection {
+  background: #111;
+  border: 2px dashed #333;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.uploadSection:hover, .uploadSectionDragOver {
+  border-color: var(--color-primary, #D4A017);
+  background: rgba(212, 160, 23, 0.05);
+}
+
+.uploadIcon {
+  font-size: 2rem;
+}
+
+.uploadBtnLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--color-primary, #D4A017);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.uploadBtnLabel:hover {
+  opacity: 0.9;
+}
+
+.hiddenFileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.uploadOrDivider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 16px 0;
+  color: #666;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.uploadOrDivider::before, .uploadOrDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #333;
+}
+
+.uploadOrDivider span {
+  padding: 0 12px;
+}
+
+.uploadProgress {
+  font-size: 0.85rem;
+  color: var(--color-primary, #D4A017);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

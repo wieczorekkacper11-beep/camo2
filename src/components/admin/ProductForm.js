@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './ProductForm.module.css';
@@ -13,8 +13,66 @@ const PRESET_IMAGES = [
   { label: 'Akcesoria', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80' },
 ];
 
+/**
+ * Kompresja zdjęcia po stronie przeglądarki przed uploadem (np. z aparatu telefonu)
+ */
+function compressImage(file) {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/') || file.type === 'image/svg+xml' || file.type === 'image/gif') {
+      return resolve(file);
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File(
+                [blob],
+                file.name.replace(/\.[^.]+$/, '') + '.jpg',
+                { type: 'image/jpeg' }
+              );
+              resolve(compressedFile);
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          0.85
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function ProductForm({ initialData = null, categories = [] }) {
   const router = useRouter();
+  const fileInputRef = useRef(null);
   const isEdit = Boolean(initialData?.id);
 
   const [formData, setFormData] = useState({
@@ -31,11 +89,14 @@ export default function ProductForm({ initialData = null, categories = [] }) {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatusText, setUploadStatusText] = useState('');
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [imgLoadError, setImgLoadError] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -51,6 +112,65 @@ export default function ProductForm({ initialData = null, categories = [] }) {
   const handleApplyPresetImage = (url) => {
     setFormData((prev) => ({ ...prev, imageUrl: url }));
     setImgLoadError(false);
+  };
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setErrorMsg('Wybierz poprawny plik graficzny (JPG, PNG, WEBP).');
+      return;
+    }
+
+    setErrorMsg(null);
+    setIsUploading(true);
+    setUploadStatusText('Optymalizuję zdjęcie z urządzenia...');
+
+    try {
+      // 1. Kompresja po stronie klienta (idealna na zdjęcia ze smartfona o wadze 10MB)
+      const optimizedFile = await compressImage(file);
+
+      setUploadStatusText('Wgrywam zdjęcie na serwer...');
+
+      const uploadData = new FormData();
+      uploadData.append('file', optimizedFile);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Nie udało się wgrać zdjęcia.');
+      }
+
+      setFormData((prev) => ({ ...prev, imageUrl: data.url }));
+      setImgLoadError(false);
+      setUploadStatusText('');
+    } catch (err) {
+      setErrorMsg(err.message || 'Wystąpił błąd podczas wgrywania pliku.');
+      setUploadStatusText('');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileInputChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -336,9 +456,60 @@ export default function ProductForm({ initialData = null, categories = [] }) {
         {/* Karta 3: Zdjęcie produktu */}
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>
-            <span className={styles.cardTitleIcon}>🖼️</span>
-            Zdjęcie produktu
+            <span className={styles.cardTitleIcon}>📷</span>
+            Zdjęcie produktu (z telefonu, komputera lub link)
           </h2>
+
+          {/* Strefa wgrywania z urządzenia */}
+          <div
+            className={`${styles.uploadSection} ${isDragOver ? styles.uploadSectionDragOver : ''}`}
+            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={handleDrop}
+            onClick={() => !isUploading && fileInputRef.current?.click()}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              className={styles.hiddenFileInput}
+              accept="image/*"
+              onChange={handleFileInputChange}
+            />
+
+            <div className={styles.uploadIcon}>📸</div>
+
+            {isUploading ? (
+              <div className={styles.uploadProgress}>
+                <span>⏳</span>
+                <span>{uploadStatusText}</span>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={styles.uploadBtnLabel}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span>Wybierz zdjęcie z telefonu lub komputera</span>
+                </button>
+                <span className={styles.hint}>
+                  Na telefonie możesz zrobić zdjęcie aparatem lub wybrać z galerii (JPG, PNG, WEBP).
+                </span>
+              </>
+            )}
+          </div>
+
+          <div className={styles.uploadOrDivider}>
+            <span>lub podaj link URL</span>
+          </div>
 
           <div className={styles.imagePreviewRow}>
             <div className={styles.imagePreviewBox}>
@@ -357,23 +528,23 @@ export default function ProductForm({ initialData = null, categories = [] }) {
               <div className={styles.formGroup}>
                 <label className={styles.label}>Adres URL zdjęcia</label>
                 <input
-                  type="url"
+                  type="text"
                   name="imageUrl"
                   className={styles.input}
-                  placeholder="https://... lub /images/..."
+                  placeholder="https://... lub /api/uploads/..."
                   value={formData.imageUrl}
                   onChange={handleChange}
                 />
                 {imgLoadError && (
                   <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '4px' }}>
-                    ⚠️ Nie udało się wczytać zdjęcia z podanego adresu URL.
+                    ⚠️ Nie udało się wczytać zdjęcia z podanego adresu.
                   </span>
                 )}
               </div>
 
               <div>
                 <div className={styles.quickPhotosTitle}>
-                  Szybki wybór zdjęć przykładowych:
+                  Szybki wybór zdjęć gotowych:
                 </div>
                 <div className={styles.quickPhotosList}>
                   {PRESET_IMAGES.map((preset) => (
@@ -393,7 +564,7 @@ export default function ProductForm({ initialData = null, categories = [] }) {
                       style={{ color: '#ef4444', borderColor: '#ef4444' }}
                       onClick={() => handleApplyPresetImage('')}
                     >
-                      ✕ Wyczyść
+                      ✕ Usuń zdjęcie
                     </button>
                   )}
                 </div>
@@ -428,7 +599,7 @@ export default function ProductForm({ initialData = null, categories = [] }) {
           <button
             type="submit"
             className={styles.submitBtn}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploading}
           >
             {isSubmitting ? (
               <>
