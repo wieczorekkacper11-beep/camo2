@@ -1,0 +1,241 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 10000;
+}
+
+.modal {
+  background: #171717;
+  border: 1px solid #333;
+  border-radius: 16px;
+  max-width: 540px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  max-height: 95vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #262626;
+}
+
+.title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.closeBtn:hover {
+  color: #fff;
+}
+
+.canvasWrapper {
+  position: relative;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  user-select: none;
+  touch-action: none;
+  cursor: grab;
+}
+
+.canvasWrapper:active {
+  cursor: grabbing;
+}
+
+.canvas {
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--color-primary, #D4A017), 0 8px 24px rgba(0, 0, 0, 0.7);
+  max-width: 100%;
+  height: auto;
+}
+
+.hintText {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 8px;
+}
+
+.controls {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #141414;
+  border-top: 1px solid #262626;
+  overflow-y: auto;
+}
+
+/* Ratio selector */
+.ratioRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ratioLabel {
+  font-size: 0.85rem;
+  color: #bbb;
+  font-weight: 500;
+}
+
+.ratioButtons {
+  display: flex;
+  gap: 6px;
+}
+
+.ratioBtn {
+  padding: 6px 12px;
+  background: #222;
+  border: 1px solid #333;
+  color: #ccc;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ratioBtnActive {
+  background: var(--color-primary, #D4A017);
+  color: #000;
+  border-color: var(--color-primary, #D4A017);
+}
+
+/* Zoom Slider */
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sliderBtn {
+  background: #262626;
+  border: 1px solid #404040;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.slider {
+  flex: 1;
+  accent-color: var(--color-primary, #D4A017);
+  cursor: pointer;
+}
+
+/* Extra action buttons */
+.extraTools {
+  display: flex;
+  gap: 10px;
+}
+
+.toolBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #222;
+  border: 1px solid #333;
+  color: #ddd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolBtn:hover {
+  background: #2e2e2e;
+  color: #fff;
+}
+
+/* Footer actions */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #262626;
+}
+
+.cancelBtn {
+  padding: 10px 18px;
+  background: #262626;
+  border: 1px solid #404040;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelBtn:hover {
+  background: #333;
+}
+
+.saveBtn {
+  padding: 10px 24px;
+  background: var(--color-primary, #D4A017);
+  border: none;
+  color: #000;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.15s, opacity 0.2s;
+}
+
+.saveBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}

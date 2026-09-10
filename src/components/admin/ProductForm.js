@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import ImageCropperModal from './ImageCropperModal';
 import styles from './ProductForm.module.css';
 
 const PRESET_IMAGES = [
@@ -12,63 +13,6 @@ const PRESET_IMAGES = [
   { label: 'Żyłki / Plecionki', url: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=600&auto=format&fit=crop&q=80' },
   { label: 'Akcesoria', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80' },
 ];
-
-/**
- * Kompresja zdjęcia po stronie przeglądarki przed uploadem (np. z aparatu telefonu)
- */
-function compressImage(file) {
-  return new Promise((resolve) => {
-    if (!file.type.startsWith('image/') || file.type === 'image/svg+xml' || file.type === 'image/gif') {
-      return resolve(file);
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        const maxDim = 1200;
-
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              const compressedFile = new File(
-                [blob],
-                file.name.replace(/\.[^.]+$/, '') + '.jpg',
-                { type: 'image/jpeg' }
-              );
-              resolve(compressedFile);
-            } else {
-              resolve(file);
-            }
-          },
-          'image/jpeg',
-          0.85
-        );
-      };
-      img.onerror = () => resolve(file);
-      img.src = e.target.result;
-    };
-    reader.onerror = () => resolve(file);
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function ProductForm({ initialData = null, categories = [] }) {
   const router = useRouter();
@@ -91,6 +35,8 @@ export default function ProductForm({ initialData = null, categories = [] }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatusText, setUploadStatusText] = useState('');
+  const [cropperImageSrc, setCropperImageSrc] = useState(null); // otwarte okno kadrowania
+
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -114,26 +60,52 @@ export default function ProductForm({ initialData = null, categories = [] }) {
     setImgLoadError(false);
   };
 
-  const handleFileUpload = async (file) => {
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      setErrorMsg('Wybierz poprawny plik graficzny (JPG, PNG, WEBP).');
-      return;
+  // Wybór pliku z dysku / aparatu -> otwiera edytor przycinania
+  const handleFileInputChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setErrorMsg('Wybierz poprawny plik graficzny (JPG, PNG, WEBP).');
+        return;
+      }
+      setErrorMsg(null);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setCropperImageSrc(ev.target.result);
+      };
+      reader.readAsDataURL(file);
     }
+    e.target.value = '';
+  };
 
-    setErrorMsg(null);
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setErrorMsg('Upuszczony plik nie jest zdjęciem.');
+        return;
+      }
+      setErrorMsg(null);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setCropperImageSrc(ev.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Zapis po przycięciu w modalnym edytorze
+  const handleCroppedSave = async (croppedBlob) => {
+    setCropperImageSrc(null);
     setIsUploading(true);
-    setUploadStatusText('Optymalizuję zdjęcie z urządzenia...');
+    setUploadStatusText('Wgrywam wykadrowane zdjęcie...');
 
     try {
-      // 1. Kompresja po stronie klienta (idealna na zdjęcia ze smartfona o wadze 10MB)
-      const optimizedFile = await compressImage(file);
-
-      setUploadStatusText('Wgrywam zdjęcie na serwer...');
-
       const uploadData = new FormData();
-      uploadData.append('file', optimizedFile);
+      const file = new File([croppedBlob], `camo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      uploadData.append('file', file);
 
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -143,33 +115,16 @@ export default function ProductForm({ initialData = null, categories = [] }) {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Nie udało się wgrać zdjęcia.');
+        throw new Error(data.error || 'Nie udało się wgrać wykadrowanego zdjęcia.');
       }
 
       setFormData((prev) => ({ ...prev, imageUrl: data.url }));
       setImgLoadError(false);
-      setUploadStatusText('');
     } catch (err) {
-      setErrorMsg(err.message || 'Wystąpił błąd podczas wgrywania pliku.');
-      setUploadStatusText('');
+      setErrorMsg(err.message || 'Wystąpił błąd podczas wgrywania zdjęcia.');
     } finally {
       setIsUploading(false);
-    }
-  };
-
-  const handleFileInputChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileUpload(file);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      handleFileUpload(file);
+      setUploadStatusText('');
     }
   };
 
@@ -457,10 +412,10 @@ export default function ProductForm({ initialData = null, categories = [] }) {
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>
             <span className={styles.cardTitleIcon}>📷</span>
-            Zdjęcie produktu (z telefonu, komputera lub link)
+            Zdjęcie produktu (aparat, komputer, przycinanie)
           </h2>
 
-          {/* Strefa wgrywania z urządzenia */}
+          {/* Strefa wyboru pliku z przycinaniem */}
           <div
             className={`${styles.uploadSection} ${isDragOver ? styles.uploadSectionDragOver : ''}`}
             onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
@@ -498,10 +453,10 @@ export default function ProductForm({ initialData = null, categories = [] }) {
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
-                  <span>Wybierz zdjęcie z telefonu lub komputera</span>
+                  <span>Zrób zdjęcie lub wybierz z urządzenia</span>
                 </button>
                 <span className={styles.hint}>
-                  Na telefonie możesz zrobić zdjęcie aparatem lub wybrać z galerii (JPG, PNG, WEBP).
+                  Po wybraniu otworzy się kadrowanie – przytnij produkt, wyśrodkuj i obróć bezpośrednio na stronie!
                 </span>
               </>
             )}
@@ -544,9 +499,20 @@ export default function ProductForm({ initialData = null, categories = [] }) {
 
               <div>
                 <div className={styles.quickPhotosTitle}>
-                  Szybki wybór zdjęć gotowych:
+                  Szybkie akcje i szablony:
                 </div>
                 <div className={styles.quickPhotosList}>
+                  {formData.imageUrl && (
+                    <button
+                      type="button"
+                      className={styles.quickPhotoBtn}
+                      style={{ background: 'var(--color-primary, #D4A017)', color: '#000', fontWeight: 700 }}
+                      onClick={() => setCropperImageSrc(formData.imageUrl)}
+                    >
+                      ✂️ Przytnij to zdjęcie
+                    </button>
+                  )}
+
                   {PRESET_IMAGES.map((preset) => (
                     <button
                       key={preset.label}
@@ -557,6 +523,7 @@ export default function ProductForm({ initialData = null, categories = [] }) {
                       + {preset.label}
                     </button>
                   ))}
+
                   {formData.imageUrl && (
                     <button
                       type="button"
@@ -614,6 +581,15 @@ export default function ProductForm({ initialData = null, categories = [] }) {
           </button>
         </div>
       </form>
+
+      {/* Modal kadrowania / przycinania zdjęcia */}
+      {cropperImageSrc && (
+        <ImageCropperModal
+          imageSrc={cropperImageSrc}
+          onSave={handleCroppedSave}
+          onCancel={() => setCropperImageSrc(null)}
+        />
+      )}
 
       {/* Modal potwierdzenia usunięcia */}
       {showDeleteModal && (
