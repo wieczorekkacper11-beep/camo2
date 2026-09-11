@@ -1,10 +1,14 @@
-import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+﻿import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth.js';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * POST /api/upload
+ * Odbiera plik (np. po przycięciu w ImageCropperModal) i zwraca
+ * data URL (base64), który jest zapisywany bezpośrednio w bazie SQLite.
+ * Dzięki temu zdjęcia NIE znikają po restarcie/deploymencie na Render.com.
+ */
 export async function POST(request) {
   try {
     const session = await getSession();
@@ -25,41 +29,28 @@ export async function POST(request) {
       );
     }
 
-    // Limit wielkości pliku do 15MB
-    if (file.size > 15 * 1024 * 1024) {
+    // Limit wielkości pliku do 8MB (po kompresji w przeglądarce powinno być dużo mniej)
+    if (file.size > 8 * 1024 * 1024) {
       return NextResponse.json(
-        { success: false, error: 'Plik jest zbyt duży (maks. 15MB).' },
+        { success: false, error: 'Plik jest zbyt duży (maks. 8MB). Przytnij zdjęcie w kadrowniku.' },
         { status: 400 }
       );
     }
 
+    // Ustal typ MIME
+    const mimeType = file.type && file.type.startsWith('image/')
+      ? file.type
+      : 'image/jpeg';
+
+    // Konwertuj do base64
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-
-    const uploadsFolder = path.join(process.cwd(), 'public', 'uploads');
-    if (!fs.existsSync(uploadsFolder)) {
-      fs.mkdirSync(uploadsFolder, { recursive: true });
-    }
-
-    // Rozszerzenie pliku
-    const originalName = file.name || 'image.jpg';
-    let ext = path.extname(originalName).toLowerCase();
-    const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
-    if (!allowedExts.includes(ext)) {
-      ext = '.jpg';
-    }
-
-    const uniqueName = `camo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}${ext}`;
-    const targetFilePath = path.join(uploadsFolder, uniqueName);
-
-    fs.writeFileSync(targetFilePath, buffer);
-
-    const publicUrl = `/api/uploads/${uniqueName}`;
+    const base64 = buffer.toString('base64');
+    const dataUrl = `data:${mimeType};base64,${base64}`;
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
-      filename: uniqueName,
+      url: dataUrl,
       message: 'Zdjęcie zostało pomyślnie wgrane!',
     });
   } catch (error) {

@@ -1,4 +1,4 @@
-# dependencies
+﻿# dependencies
 /node_modules
 /.pnp
 .pnp.js
@@ -6,6 +6,15 @@
 # next.js build output
 /.next/
 /out/
+
+# environment variables (NEVER commit secrets!)
+.env
+.env.local
+.env.development
+.env.production
+
+# uploaded files on disk (now stored in DB as base64 - not needed)
+/public/uploads/
 
 # misc
 .DS_Store
