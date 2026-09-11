@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -45,6 +45,31 @@ const navItems = [
     ),
   },
   {
+    href: '/admin/aktualnosci',
+    label: 'Aktualnosci',
+    exact: false,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
+        <path d="M18 14h-8" />
+        <path d="M15 18h-5" />
+        <path d="M10 6h8v4h-8V6Z" />
+      </svg>
+    ),
+  },
+  {
+    href: '/admin/statystyki',
+    label: 'Statystyki',
+    exact: false,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ),
+  },
+  {
     href: '/admin/ustawienia',
     label: 'Ustawienia',
     exact: false,
@@ -74,15 +99,13 @@ export default function AdminDashboardLayout({ children }) {
       router.push('/admin/login');
       router.refresh();
     } catch (error) {
-      console.error('Błąd wylogowania:', error);
+      console.error('Blad wylogowania:', error);
       router.push('/admin/login');
     }
   };
 
   const isActive = (item) => {
-    if (item.exact) {
-      return pathname === item.href;
-    }
+    if (item.exact) return pathname === item.href;
     return pathname.startsWith(item.href);
   };
 
@@ -98,7 +121,7 @@ export default function AdminDashboardLayout({ children }) {
           type="button"
           className={styles.mobileToggle}
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? 'Zamknij menu' : 'Otwórz menu'}
+          aria-label={mobileOpen ? 'Zamknij menu' : 'Otworz menu'}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             {mobileOpen ? (
@@ -114,19 +137,12 @@ export default function AdminDashboardLayout({ children }) {
         </button>
       </header>
 
-      {/* Backdrop for mobile */}
       {mobileOpen && (
-        <div
-          className={styles.backdrop}
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
+        <div className={styles.backdrop} onClick={() => setMobileOpen(false)} aria-hidden="true" />
       )}
 
       {/* Sidebar */}
-      <aside
-        className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ''}`}
-      >
+      <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ''}`}>
         <Link href="/admin" className={styles.brand}>
           <img src="/images/logo.png" alt="CAMO" className={styles.logoImg} />
           <div className={styles.brandInfo}>
@@ -142,9 +158,7 @@ export default function AdminDashboardLayout({ children }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`${styles.navItem} ${
-                  active ? styles.navItemActive : ''
-                }`}
+                className={`${styles.navItem} ${active ? styles.navItemActive : ''}`}
               >
                 <span className={styles.navIcon}>{item.icon}</span>
                 <span>{item.label}</span>
@@ -160,20 +174,16 @@ export default function AdminDashboardLayout({ children }) {
               <polyline points="15 3 21 3 21 9" />
               <line x1="10" x2="21" y1="14" y2="3" />
             </svg>
-            <span>Zobacz sklep na żywo</span>
+            <span>Zobacz sklep na zywo</span>
           </Link>
 
-          <button
-            type="button"
-            className={styles.logoutBtn}
-            onClick={handleLogout}
-          >
+          <button type="button" className={styles.logoutBtn} onClick={handleLogout}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" x2="9" y1="12" y2="12" />
             </svg>
-            <span>Wyloguj się</span>
+            <span>Wyloguj sie</span>
           </button>
         </div>
       </aside>

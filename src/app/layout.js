@@ -1,6 +1,7 @@
-import { Inter } from 'next/font/google';
+﻿import { Inter } from 'next/font/google';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import PageViewTracker from '@/components/PageViewTracker';
 import { getSettingsMap } from '@/lib/db/queries.js';
 import './globals.css';
 
@@ -12,19 +13,19 @@ const inter = Inter({
 
 export const metadata = {
   title: {
-    default: 'CAMO – Sklep Strzelecko-Wędkarski | Busko-Zdrój',
-    template: '%s | CAMO Sklep Strzelecko-Wędkarski',
+    default: 'CAMO - Sklep Strzelecko-Wedkarski | Busko-Zdrojewoj',
+    template: '%s | CAMO Sklep Strzelecko-Wedkarski',
   },
   description:
-    'CAMO – lokalny sklep strzelecko-wędkarski w okolicach Buska-Zdroju. Szeroki wybór wędek, kołowrotków, przynęt, zanęt i akcesoriów. Sprawdź aktualny asortyment.',
+    'CAMO - lokalny sklep strzelecko-wedkarski w okolicach Buska-Zdroju. Szeroki wybor wedek, kolowrotkow, przynety, zanety i akcesoriow. Sprawdz aktualny asortyment.',
   keywords: [
-    'sklep wędkarski', 'Busko-Zdrój', 'CAMO', 'wędki', 'kołowrotki',
-    'przynęty', 'zanęty', 'akcesoria wędkarskie', 'Siesławice',
+    'sklep wedkarski', 'Busko-Zdrojewoj', 'CAMO', 'wedki', 'kolowrotki',
+    'przynety', 'zanety', 'akcesoria wedkarskie', 'Sieslawice',
     'sklep strzelecki',
   ],
   openGraph: {
-    title: 'CAMO – Sklep Strzelecko-Wędkarski | Busko-Zdrój',
-    description: 'Lokalny sklep strzelecko-wędkarski w okolicach Buska-Zdroju. Sprzęt, przynęty i akcesoria w jednym miejscu.',
+    title: 'CAMO - Sklep Strzelecko-Wedkarski | Busko-Zdrojewoj',
+    description: 'Lokalny sklep strzelecko-wedkarski w okolicach Buska-Zdroju.',
     type: 'website',
     locale: 'pl_PL',
   },
@@ -37,11 +38,16 @@ export const metadata = {
 
 export default async function RootLayout({ children }) {
   const settings = await getSettingsMap();
-  const showBanner = (settings.announcement_enabled === '1' || settings.announcement_enabled === 'true') && settings.announcement_text;
+  const showBanner =
+    (settings.announcement_enabled === '1' || settings.announcement_enabled === 'true') &&
+    settings.announcement_text;
 
   return (
     <html lang="pl" className={inter.variable}>
       <body>
+        {/* Licznik odwiedzin (niewidoczny, uruchamia sie po stronie klienta) */}
+        <PageViewTracker />
+
         {showBanner && (
           <div
             style={{

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 import styles from './Header.module.css';
 
 const navLinks = [
-  { href: '/', label: 'Strona główna' },
+  { href: '/', label: 'Strona glowna' },
+  { href: '/aktualnosci', label: 'Aktualnosci' },
   { href: '/katalog', label: 'Katalog' },
   { href: '/kategorie', label: 'Kategorie' },
   { href: '/o-sklepie', label: 'O sklepie' },
@@ -37,16 +38,16 @@ export default function Header() {
     <header className={styles.header} id="main-header">
       <div className={styles.headerInner}>
         {/* Logo */}
-        <Link href="/" className={styles.logo} aria-label="CAMO – Strona główna">
+        <Link href="/" className={styles.logo} aria-label="CAMO - Strona glowna">
           <img src="/images/logo.png" alt="CAMO" className={styles.logoImg} />
           <span className={styles.logoText}>
             <span className={styles.logoName}>CAMO</span>
-            <span className={styles.logoSubtitle}>Sklep strzelecko-wędkarski</span>
+            <span className={styles.logoSubtitle}>Sklep strzelecko-wedkarski</span>
           </span>
         </Link>
 
         {/* Desktop Nav */}
-        <nav className={styles.nav} aria-label="Nawigacja główna">
+        <nav className={styles.nav} aria-label="Nawigacja glowna">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -70,7 +71,7 @@ export default function Header() {
           <button
             className={`${styles.hamburger} ${mobileOpen ? styles.hamburgerOpen : ''}`}
             onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label={mobileOpen ? 'Zamknij menu' : 'Otwórz menu'}
+            aria-label={mobileOpen ? 'Zamknij menu' : 'Otworz menu'}
             aria-expanded={mobileOpen}
           >
             <span className={styles.hamburgerIcon}>
@@ -99,11 +100,11 @@ export default function Header() {
             <img src="/images/logo.png" alt="CAMO" className={styles.logoImg} />
             <span className={styles.logoText}>
               <span className={styles.logoName}>CAMO</span>
-              <span className={styles.logoSubtitle}>Sklep strzelecko-wędkarski</span>
+              <span className={styles.logoSubtitle}>Sklep strzelecko-wedkarski</span>
             </span>
           </Link>
           <button className={styles.mobileMenuClose} onClick={() => setMobileOpen(false)} aria-label="Zamknij menu">
-            ✕
+            &times;
           </button>
         </div>
 
